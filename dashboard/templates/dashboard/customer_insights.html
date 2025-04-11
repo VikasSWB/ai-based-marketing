@@ -1,0 +1,368 @@
+
+
+ {% load static %}
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Customer Insights - Caddy Dashboard</title>
+     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+     <style>
+         body {
+             font-family: 'Roboto', sans-serif;
+             margin: 0;
+             padding: 0;
+             display: flex;
+         }
+         .sidebar {
+             width: 250px;
+             background-color: #2c3e50;
+             color: white;
+             height: 100vh;
+             position: fixed;
+             padding-top: 20px;
+         }
+         .sidebar h2 {
+             text-align: center;
+             font-size: 24px;
+             margin-bottom: 30px;
+         }
+         .sidebar a {
+             color: white;
+             text-decoration: none;
+             display: block;
+             padding: 10px 20px;
+             font-size: 18px;
+         }
+         .sidebar a:hover {
+             background-color: #34495e;
+         }
+         .content {
+             margin-left: 250px;
+             padding: 20px;
+             width: calc(100% - 250px);
+             background-color: #f5f7fa;
+             min-height: 100vh;
+         }
+         .navbar {
+             background-color: white;
+             padding: 15px;
+             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+             display: flex;
+             justify-content: space-between;
+             align-items: center;
+         }
+         .navbar h1 {
+             margin: 0;
+             font-size: 24px;
+             color: #2c3e50;
+         }
+         .user-info {
+             font-size: 16px;
+         }
+         .user-info a {
+             color: #007bff;
+             text-decoration: none;
+             margin-left: 10px;
+         }
+         .chart-card {
+             background: white;
+             padding: 20px;
+             border-radius: 15px;
+             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+             margin-bottom: 20px;
+             height: 300px;
+             display: flex;
+             flex-direction: column;
+         }
+         .chart-card:hover {
+             transform: translateY(-5px);
+         }
+         .chart-card h3 {
+             margin: 0 0 10px;
+             color: #2c3e50;
+             font-size: 18px;
+             font-weight: 500;
+         }
+         .chart-card p {
+             margin: 0;
+             color: #6c757d;
+             font-size: 14px;
+         }
+         .chart-card#topCustomersCard {
+             background: #42A5F5;
+             color: white;
+         }
+         .chart-card#topCustomersCard h3,
+         .chart-card#topCustomersCard p {
+             color: white;
+         }
+         .chart-card#orderTrendCard {
+             background: #66BB6A;
+             color: white;
+         }
+         .chart-card#orderTrendCard h3,
+         .chart-card#orderTrendCard p {
+             color: white;
+         }
+         .chart-container {
+             flex: 1;
+             position: relative;
+             width: 100%;
+             height: 200px;
+         }
+         .chart-container canvas {
+             width: 100% !important;
+             height: 100% !important;
+         }
+         .error {
+             color: #dc3545;
+             text-align: center;
+             margin: 20px 0;
+             display: none;
+         }
+         .table-container {
+             background: white;
+             padding: 20px;
+             border-radius: 15px;
+             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+             margin-top: 20px;
+         }
+         .table-container h2 {
+             margin: 0 0 15px;
+             color: #2c3e50;
+             font-size: 20px;
+             font-weight: 500;
+         }
+         .table-container table {
+             width: 100%;
+             border-collapse: collapse;
+             font-size: 14px;
+             table-layout: fixed;
+         }
+         .table-container th,
+         .table-container td {
+             padding: 10px;
+             text-align: left;
+             border-bottom: 1px solid #e0e0e0;
+             overflow: hidden;
+             text-overflow: ellipsis;
+             white-space: nowrap;
+         }
+         .table-container th {
+             background-color: #f8f9fa;
+             color: #2c3e50;
+             font-weight: 500;
+         }
+         .table-container th:nth-child(1),
+         .table-container td:nth-child(1) {
+             width: 30%;
+         }
+         .table-container th:nth-child(2),
+         .table-container td:nth-child(2) {
+             width: 50%;
+         }
+         .table-container th:nth-child(3),
+         .table-container td:nth-child(3) {
+             width: 20%;
+         }
+         .table-container td {
+             color: #6c757d;
+         }
+         .table-container td:nth-child(2) {
+             position: relative;
+         }
+         .table-container td:nth-child(2):hover::after {
+             content: attr(data-full-email);
+             position: absolute;
+             background-color: #333;
+             color: white;
+             padding: 5px 10px;
+             border-radius: 5px;
+             z-index: 1000;
+             white-space: nowrap;
+             top: -30px;
+             left: 0;
+         }
+         .table-container tr:hover {
+             background-color: #f8f9fa;
+         }
+         .filter-container {
+             margin-bottom: 15px;
+             display: flex;
+             align-items: center;
+             gap: 10px;
+             flex-wrap: wrap;
+         }
+         .filter-container label {
+             color: #2c3e50;
+             font-size: 14px;
+         }
+         .filter-container select,
+         .filter-container input {
+             padding: 5px;
+             border-radius: 5px;
+             border: 1px solid #ccc;
+             font-size: 14px;
+             background-color: white;
+             color: #2c3e50;
+         }
+         .filter-container select:focus,
+         .filter-container input:focus {
+             outline: none;
+             border-color: #42A5F5;
+             box-shadow: 0 0 5px rgba(66, 165, 245, 0.5);
+         }
+         .pagination {
+             margin-top: 15px;
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             gap: 5px;
+             flex-wrap: wrap;
+             max-width: 100%;
+         }
+         .pagination button {
+             padding: 5px 10px;
+             border: 1px solid #ccc;
+             border-radius: 5px;
+             background-color: white;
+             color: #2c3e50;
+             cursor: pointer;
+             min-width: 80px;
+         }
+         .pagination button:disabled {
+             background-color: #f0f0f0;
+             cursor: not-allowed;
+         }
+         .pagination button:hover:not(:disabled) {
+             background-color: #e0e0e0;
+         }
+         .pagination span {
+             padding: 5px 8px;
+             color: #2c3e50;
+             cursor: pointer;
+             border-radius: 5px;
+         }
+         .pagination span.active {
+             background-color: #42A5F5;
+             color: white;
+             font-weight: bold;
+         }
+         .pagination span:hover:not(.active) {
+             background-color: #e0e0e0;
+         }
+         .pagination .ellipsis {
+             padding: 5px 8px;
+             color: #6c757d;
+         }
+     </style>
+ </head>
+ <body>
+     <div class="sidebar">
+         <h2>My Dashboard</h2>
+         <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Home</a>
+         <a href="{% url 'eda_charts' %}" class="{% if request.resolver_match.url_name == 'eda_charts' %}active{% endif %}">EDA Charts</a>
+         <a href="{% url 'rfm_analysis' %}" class="{% if request.resolver_match.url_name == 'rfm_analysis' %}active{% endif %}">RFM Analysis</a>
+         <a href="{% url 'customer_insights' %}" class="{% if request.resolver_match.url_name == 'customer_insights' %}active{% endif %}">Customer Insights</a>
+         <a href="{% url 'cohort_analysis' %}" class="{% if request.resolver_match.url_name == 'cohort_analysis' %}active{% endif %}">Cohort Analysis</a>
+         <a href="{% url 'financial_insights' %}" class="{% if request.resolver_match.url_name == 'financial_insights' %}active{% endif %}">Financial Insights</a>
+         <a href="{% url 'product_insights' %}" class="{% if request.resolver_match.url_name == 'product_insights' %}active{% endif %}">Product Insights</a>
+         <a href="{% url 'customer_profile' %}" class="{% if request.resolver_match.url_name == 'customer_profile' %}active{% endif %}">Customer Profile</a>
+         <a href="{% url 'rfm_churn_visualizations' %}" class="{% if request.resolver_match.url_name == 'rfm_churn_visualizations' %}active{% endif %}">RFM & Churn Trends</a>
+         <a href="{% url 'signout' %}" class="{% if request.resolver_match.url_name == 'signout' %}active{% endif %}">Sign Out</a>
+     </div>
+     <div class="content">
+         <div class="navbar">
+             <h1>Customer Insights</h1>
+             <div class="user-info">
+                 {% if user.is_authenticated %}
+                     Hello, {{ user.username }}!
+                 {% else %}
+                     <a href="{% url 'signin' %}">Sign In</a>
+                     <a href="{% url 'signup' %}">Sign Up</a>
+                 {% endif %}
+             </div>
+         </div>
+         <div class="error" id="error"></div>
+         <div class="container mt-4">
+             <!-- Filter Form -->
+             <div class="mt-3">
+                 <h4>Filters</h4>
+                 <div class="filter-container">
+                     <div>
+                         <label for="dateRangeOption">Date Range Option:</label>
+                         <select id="dateRangeOption" class="form-select">
+                             <option value="last_1_year">Last 1 Year</option>
+                             <option value="all">All Data</option>
+                         </select>
+                     </div>
+                     <div>
+                         <label for="startDate">Start Date:</label>
+                         <input type="date" id="startDate" value="2024-04-01" class="form-control">
+                     </div>
+                     <div>
+                         <label for="endDate">End Date:</label>
+                         <input type="date" id="endDate" value="2025-04-01" class="form-control">
+                     </div>
+                     <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
+                 </div>
+             </div>
+             <!-- Date Range Note -->
+             <div id="dateRangeNote">
+                 Showing data for the last 1 year (2024-04-01 to 2025-04-01).
+             </div>
+             <!-- Charts Row -->
+             <div class="row">
+                 <div class="col-md-6">
+                     <div class="chart-card" id="topCustomersCard">
+                         <h3>Top Customers by Total Orders</h3>
+                         <p>Top 10 customers by number of orders</p>
+                         <div class="chart-container">
+                             <canvas id="topCustomersChart"></canvas>
+                         </div>
+                     </div>
+                 </div>
+                 <div class="col-md-6">
+                     <div class="chart-card" id="orderTrendCard">
+                         <h3>Customer Order Trend Over Time</h3>
+                         <p>Total orders per month</p>
+                         <div class="chart-container">
+                             <canvas id="orderTrendChart"></canvas>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+             <!-- Customer Details Table -->
+             <div class="table-container">
+                 <h2>Customer Details</h2>
+                 <div class="filter-container">
+                     <label for="orderRangeSelect">Order Range:</label>
+                     <select id="orderRangeSelect" class="form-select">
+                         <!-- Options will be populated dynamically -->
+                     </select>
+                 </div>
+                 <table id="customerTable">
+                     <thead>
+                         <tr>
+                             <th>Customer Name</th>
+                             <th>Email</th>
+                             <th>Total Orders</th>
+                         </tr>
+                     </thead>
+                     <tbody id="customerTableBody">
+                         <!-- Data will be populated dynamically -->
+                     </tbody>
+                 </table>
+                 <div class="pagination" id="pagination">
+                     <!-- Pagination controls will be populated dynamically -->
+                 </div>
+             </div>
+         </div>
+     </div>
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+     <script src="{% static 'js/customer_insights.js' %}"></script>
+ </body>
+ </html>

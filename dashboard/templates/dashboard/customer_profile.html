@@ -1,0 +1,345 @@
+
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Profile - Caddy Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+        }
+        .sidebar a.active {
+            background-color: #42A5F5;
+            font-weight: bold;
+        }
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+            background-color: #f5f7fa;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        .user-info {
+            font-size: 16px;
+        }
+        .user-info a {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        .customer-header {
+            margin-bottom: 20px;
+        }
+        .customer-header h2 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin: 0;
+        }
+        .customer-details-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .customer-details {
+            width: 30%;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .customer-details .detail {
+            margin-bottom: 20px;
+        }
+        .customer-details .detail label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        .customer-details .detail p {
+            font-size: 16px;
+            color: #2c3e50;
+            margin: 5px 0 0;
+        }
+        .customer-details .rfm-status {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .customer-details .rfm-status p {
+            margin: 0;
+        }
+        .customer-details .rfm-status .heart {
+            color: #28a745;
+            font-size: 16px;
+        }
+        .customer-details .lifespan {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .customer-details .lifespan .timeline {
+            flex: 1;
+            height: 4px;
+            background: #e0e0e0;
+            margin: 0 10px;
+            position: relative;
+        }
+        .customer-details .lifespan .timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #2c3e50;
+        }
+        .retention-metrics {
+            width: 70%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .metric-card .value {
+            font-size: 24px;
+            color: #2c3e50;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .metric-card .label {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        .metric-card .badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        .metric-card .badge.overdue {
+            background: #ff7043;
+        }
+        .ltv-graph-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .ltv-graph-container {
+            flex: 1;
+            height: 300px;
+            position: relative;
+        }
+        .ltv-graph-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .ltv-graph-card .active-window {
+            text-align: right;
+        }
+        .ltv-graph-card .active-window p {
+            font-size: 14px;
+            color: #6c757d;
+            margin: 0;
+        }
+        .ltv-graph-card .active-window a {
+            font-size: 14px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .filter-container {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .filter-container label {
+            color: #2c3e50;
+            font-size: 14px;
+        }
+        .filter-container select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            background-color: white;
+            color: #2c3e50;
+            width: 300px;
+        }
+        .filter-container select:focus {
+            outline: none;
+            border-color: #42A5F5;
+            box-shadow: 0 0 5px rgba(66, 165, 245, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>My Dashboard</h2>
+        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Home</a>
+        <a href="{% url 'eda_charts' %}" class="{% if request.resolver_match.url_name == 'eda_charts' %}active{% endif %}">EDA Charts</a>
+        <a href="{% url 'rfm_analysis' %}" class="{% if request.resolver_match.url_name == 'rfm_analysis' %}active{% endif %}">RFM Analysis</a>
+        <a href="{% url 'customer_insights' %}" class="{% if request.resolver_match.url_name == 'customer_insights' %}active{% endif %}">Customer Insights</a>
+        <a href="{% url 'cohort_analysis' %}" class="{% if request.resolver_match.url_name == 'cohort_analysis' %}active{% endif %}">Cohort Analysis</a>
+        <a href="{% url 'financial_insights' %}" class="{% if request.resolver_match.url_name == 'financial_insights' %}active{% endif %}">Financial Insights</a>
+        <a href="{% url 'product_insights' %}" class="{% if request.resolver_match.url_name == 'product_insights' %}active{% endif %}">Product Insights</a>
+        <a href="{% url 'customer_profile' %}" class="{% if request.resolver_match.url_name == 'customer_profile' %}active{% endif %}">Customer Profile</a>
+        <a href="{% url 'rfm_churn_visualizations' %}" class="{% if request.resolver_match.url_name == 'rfm_churn_visualizations' %}active{% endif %}">RFM & Churn Trends</a>
+        <a href="{% url 'signout' %}" class="{% if request.resolver_match.url_name == 'signout' %}active{% endif %}">Sign Out</a>
+    </div>
+    <div class="content">
+        <div class="navbar">
+            <h1>Customer Profile</h1>
+            <div class="user-info">
+                {% if user.is_authenticated %}
+                    Hello, {{ user.username }}!
+                {% else %}
+                    <a href="{% url 'signin' %}">Sign In</a>
+                    <a href="{% url 'signup' %}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="error" id="error"></div>
+        <div class="container mt-4">
+            <div class="filter-container">
+                <label for="customerSelect">Select Customer:</label>
+                <select id="customerSelect">
+                    <option value="">-- Select a Customer --</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+            </div>
+            <div id="customerProfile" style="display: none;">
+                <div class="customer-header">
+                    <h2 id="customerName"></h2>
+                </div>
+                <div class="customer-details-container">
+                    <div class="customer-details">
+                        <div class="detail rfm-status">
+                            <label>RFM Status</label>
+                            <div class="rfm-status">
+                                <p id="rfmStatus"></p>
+                                <span class="heart">♥</span>
+                            </div>
+                        </div>
+                        <div class="detail">
+                            <label>Email</label>
+                            <p id="customerEmail"></p>
+                        </div>
+                        <div class="detail">
+                            <label>Lifespan</label>
+                            <div class="lifespan">
+                                <span id="firstOrderDate"></span>
+                                <div class="timeline"></div>
+                                <span id="lastOrderDate"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="retention-metrics">
+                        <div class="metric-card">
+                            <div class="value" id="ltv"></div>
+                            <div class="label">LTV</div>
+                            <div class="badge" id="ltvBadge" style="display: none;">Top 10%</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="value" id="lifetime"></div>
+                            <div class="label">Lifetime</div>
+                            <div class="badge" id="lifetimeBadge" style="display: none;">Top 10%</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="value" id="avgDaysBetweenOrders"></div>
+                            <div class="label">Avg. Days Between Orders</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="value" id="estNextOrderDate"></div>
+                            <div class="label">Est. Next Order Date</div>
+                            <div class="badge overdue" id="overdueBadge" style="display: none;">Overdue</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="value" id="churnRate"></div>
+                            <div class="label">Churn Risk</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ltv-graph-card">
+                    <div class="ltv-graph-container">
+                        <canvas id="ltvGraph"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/customer_profile.js' %}"></script>
+</body>
+</html>

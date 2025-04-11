@@ -1,0 +1,430 @@
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caddy Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+        }
+        .sidebar h2 {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+        .sidebar a:hover {
+            background-color: #34495e;
+        }
+        .content {
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+            background-color: #f5f7fa;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar h1 {
+            margin: 0;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+        .user-info {
+            font-size: 16px;
+        }
+        .user-info a {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .stat-card h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #6c757d;
+        }
+        .stat-card p {
+            margin: 5px 0 0;
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-card .change {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .stat-card .change.positive {
+            color: #28a745;
+        }
+        .stat-card .change.negative {
+            color: #dc3545;
+        }
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chart-card:hover {
+            transform: translateY(-5px);
+        }
+        .chart-card h3 {
+            margin: 0 0 10px;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .chart-card p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 14px;
+        }
+        .chart-card#websiteViewsCard {
+            background: #42A5F5; /* Blue */
+            color: white;
+        }
+        .chart-card#websiteViewsCard h3,
+        .chart-card#websiteViewsCard p {
+            color: white;
+        }
+        .chart-card#dailySalesCard {
+            background: #66BB6A; /* Green */
+            color: white;
+        }
+        .chart-card#dailySalesCard h3,
+        .chart-card#dailySalesCard p {
+            color: white;
+        }
+        .chart-card#orderStatusCard {
+            background: #EF5350; /* Red */
+            color: white;
+        }
+        .chart-card#orderStatusCard h3,
+        .chart-card#orderStatusCard p {
+            color: white;
+        }
+        .chart-card#paymentMethodCard {
+            background: #AB47BC; /* Purple */
+            color: white;
+        }
+        .chart-card#paymentMethodCard h3,
+        .chart-card#paymentMethodCard p {
+            color: white;
+        }
+        .chart-card#avgOrderValueCard {
+            background: #FFCA28; /* Yellow */
+            color: white;
+        }
+        .chart-card#avgOrderValueCard h3,
+        .chart-card#avgOrderValueCard p {
+            color: white;
+        }
+        .chart-card#paymentPopularityCard {
+            background: #26C6DA; /* Cyan */
+            color: white;
+        }
+        .chart-card#paymentPopularityCard h3,
+        .chart-card#paymentPopularityCard p {
+            color: white;
+        }
+        .chart-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 200px;
+        }
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .order-list {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .order-list h3 {
+            margin: 0 0 15px;
+            color: #2c3e50;
+        }
+        .top-products {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .top-products h3 {
+            margin: 0 0 15px;
+            color: #2c3e50;
+        }
+        .discount-usage {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .discount-usage h3 {
+            margin: 0 0 15px;
+            color: #2c3e50;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>My Dashboard</h2>
+        <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">Home</a>
+        <a href="{% url 'eda_charts' %}" class="{% if request.resolver_match.url_name == 'eda_charts' %}active{% endif %}">EDA Charts</a>
+        <a href="{% url 'rfm_analysis' %}" class="{% if request.resolver_match.url_name == 'rfm_analysis' %}active{% endif %}">RFM Analysis</a>
+        <a href="{% url 'customer_insights' %}" class="{% if request.resolver_match.url_name == 'customer_insights' %}active{% endif %}">Customer Insights</a>
+        <a href="{% url 'cohort_analysis' %}" class="{% if request.resolver_match.url_name == 'cohort_analysis' %}active{% endif %}">Cohort Analysis</a>
+        <a href="{% url 'financial_insights' %}" class="{% if request.resolver_match.url_name == 'financial_insights' %}active{% endif %}">Financial Insights</a>
+        <a href="{% url 'product_insights' %}" class="{% if request.resolver_match.url_name == 'product_insights' %}active{% endif %}">Product Insights</a>
+        <a href="{% url 'customer_profile' %}" class="{% if request.resolver_match.url_name == 'customer_profile' %}active{% endif %}">Customer Profile</a>
+        <a href="{% url 'rfm_churn_visualizations' %}" class="{% if request.resolver_match.url_name == 'rfm_churn_visualizations' %}active{% endif %}">RFM & Churn Trends</a>
+        <a href="{% url 'signout' %}" class="{% if request.resolver_match.url_name == 'signout' %}active{% endif %}">Sign Out</a>
+    </div>
+    <div class="content">
+        <div class="navbar">
+            <h1>Dashboard</h1>
+            <div class="user-info">
+                {% if user.is_authenticated %}
+                    Hello, {{ user.username }}!
+                {% else %}
+                    <a href="{% url 'signin' %}">Sign In</a>
+                    <a href="{% url 'signup' %}">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="error" id="error"></div>
+        <div class="container mt-4">
+            <!-- Stats Row -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3>Today Customers</h3>
+                        <p>{{ today_customers }}</p>
+                        <div class="change {% if customers_change >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if customers_change >= 0 %}+{% endif %}{{ customers_change|floatformat:1 }}% from yesterday
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3>Today Products</h3>
+                        <p>{{ today_products }}</p>
+                        <div class="change {% if products_change >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if products_change >= 0 %}+{% endif %}{{ products_change|floatformat:1 }}% from yesterday
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3>Total Orders</h3>
+                        <p>{{ total_orders }}</p>
+                        <div class="change {% if orders_change >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if orders_change >= 0 %}+{% endif %}{{ orders_change|floatformat:1 }}% from yesterday
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3>Total Revenue</h3>
+                        <p>${{ total_revenue|floatformat:2 }}</p>
+                        <div class="change {% if revenue_change >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if revenue_change >= 0 %}+{% endif %}{{ revenue_change|floatformat:1 }}% from yesterday
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row 1 -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-card" id="websiteViewsCard">
+                        <h3>Website Views</h3>
+                        <p>Orders per day over the last 7 days</p>
+                        <div class="chart-container">
+                            <canvas id="websiteViewsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-card" id="dailySalesCard">
+                        <h3>Daily Sales</h3>
+                        <p>Revenue over the last 9 months</p>
+                        <div class="chart-container">
+                            <canvas id="dailySalesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row 2 -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-card" id="orderStatusCard">
+                        <h3>Order Status Breakdown</h3>
+                        <p>Average order total by status</p>
+                        <div class="chart-container">
+                            <canvas id="orderStatusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-card" id="paymentMethodCard">
+                        <h3>Revenue by Payment Method</h3>
+                        <p>Total revenue per payment method</p>
+                        <div class="chart-container">
+                            <canvas id="paymentMethodChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Charts Row 3: New Charts -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-card" id="avgOrderValueCard">
+                        <h3>Average Order Value by Customer</h3>
+                        <p>Top 10 customers by average order value</p>
+                        <div class="chart-container">
+                            <canvas id="avgOrderValueChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-card" id="paymentPopularityCard">
+                        <h3>Payment Method Popularity</h3>
+                        <p>Distribution of orders by payment method</p>
+                        <div class="chart-container">
+                            <canvas id="paymentPopularityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Recent Orders -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="order-list">
+                        <h3>Recent Orders</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Product</th>
+                                    <th>Order Total</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_orders %}
+                                    <tr>
+                                        <td>{{ order.order_id }}</td>
+                                        <td>{{ order.customer_name }}</td>
+                                        <td>{{ order.product_name }}</td>
+                                        <td>${{ order.order_total|floatformat:2 }}</td>
+                                        <td>{{ order.order_date|date:"Y-m-d H:i" }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5">No recent orders available.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <!-- Top Products and Discount Usage -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="top-products">
+                        <h3>Top Products by Sales</h3>
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Total Sales</th>
+                                    <th>Quantity Sold</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in top_products %}
+                                    <tr>
+                                        <td>{{ product.product_name }}</td>
+                                        <td>${{ product.total_sales|floatformat:2 }}</td>
+                                        <td>{{ product.total_quantity }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="3">No top products available.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="discount-usage">
+                        <h3>Discount Usage Overview</h3>
+                        <p><strong>Total Discount Applied:</strong> ${{ total_discount|floatformat:2 }}</p>
+                        <p><strong>Orders with Coupon:</strong> {{ orders_with_coupon }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+</html>
